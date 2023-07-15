@@ -1,6 +1,6 @@
 ---
 - hosts: masters
-  become_user: root
+  become: yes
   gather_facts: yes
 
   vars_prompt:
@@ -28,9 +28,10 @@
      run_once: true
      delegate_to: "{{ k8s_master_ip }}"
 
-   - pause: seconds=30
+   - pause: seconds=120
 
    - name: Create directory for kube config.
+     become: yes
      file: 
        path: /home/{{ansible_user }}/.kube
        state: directory
@@ -39,6 +40,9 @@
        mode: 0755
 
    - name: Copy /etc/kubernetes/admin.conf to user's home directory /home/{{ ansible_user }}/.kube/config.
+     become_user: root
+     become_method: sudo
+     become: yes
      copy:
        src: /etc/kubernetes/admin.conf
        dest: /home/{{ ansible_user }}/.kube/config
@@ -47,20 +51,22 @@
        group: "{{ ansible_user }}"
        mode: '0644'
 
-   - pause: seconds=10
+   - pause: seconds=20
 
    - name: Remove the cache directory.
+     become: yes
      file: 
        path: /home/{{ ansible_user }}/.kube/cache
        state: absent
 
    - name: Create Pod Network & RBAC.
+     become: yes
      command: "{{ item }}"
      with_items: 
         - kubectl apply -f {{ pod_network_manifest_file }}
         - kubectl apply -f {{ rbac_manifest_file }}
 
-   - pause: seconds=30
+   - pause: seconds=60
 
    - name: Get the token for joining the nodes with Kuberentes master.
      shell: kubeadm token create  --print-join-command
