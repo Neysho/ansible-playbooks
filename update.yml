@@ -1,6 +1,6 @@
 ---
 - name: Update Ubuntu Packages
-  hosts: your_host
+  hosts: all
   become: yes
 
   tasks:
